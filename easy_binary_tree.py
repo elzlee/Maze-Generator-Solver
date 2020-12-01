@@ -1,5 +1,6 @@
 ##########################################
-# BETTER VERSION: using cell class #
+# Easy maze level
+# maze generation: binary tree 
 ##########################################
 '''
 - create maze without canvas, stored as list/tuple
@@ -18,8 +19,8 @@ class MazeCell(object):
         self.east = east
         self.south = south
         self.west = west
+        
 class EasyMode(Mode):
-
     def appStarted(mode):
         mode.cellSize = 25
         mode.mazeRows = 20 # increase for difficulty
