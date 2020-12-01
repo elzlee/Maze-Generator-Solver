@@ -7,7 +7,8 @@ import math, copy, random
 from cmu_112_graphics import *
 from tkinter import *
 from easy_binary_tree import *
-from medium_DFS import *
+#from medium_DFS import *
+from how_to_play import *
 
 # class = capital first letters
 # functions = camel style
@@ -114,15 +115,19 @@ class SplashScreenMode(Mode):
                             font=mode.buttonFont, fill=mode.white)
 
         canvas.create_rectangle(500, 650, 700, 700, fill=mode.red, width=0)
-        canvas.create_text(mode.width/2, 675,  text='medium', 
+        canvas.create_text(mode.width/2, 675,  text='solo - medium', 
+                            font=mode.buttonFont, fill=mode.white)
+
+        canvas.create_rectangle(500, 725, 700, 775, fill=mode.red, width=0)
+        canvas.create_text(mode.width/2, 750,  text='game ai', 
                             font=mode.buttonFont, fill=mode.white)
 
         canvas.create_rectangle(275, 650, 475, 700, fill=mode.red, width=0)
-        canvas.create_text(mode.width/2 - 225, 675,  text='easy', 
+        canvas.create_text(mode.width/2 - 225, 675,  text='solo - easy', 
                             font=mode.buttonFont, fill=mode.white)
 
         canvas.create_rectangle(725, 650, 925, 700, fill=mode.red, width=0)
-        canvas.create_text(mode.width/2 + 225, 675,  text='hard', 
+        canvas.create_text(mode.width/2 + 225, 675,  text='solo - hard', 
                             font=mode.buttonFont, fill=mode.white)
 
     def redrawAll(mode, canvas):
@@ -137,13 +142,8 @@ class SplashScreenMode(Mode):
         # 5 buttons
         mode.drawSplashButtons(canvas)
 
-class HowToPlayMode(Mode):
-    pass
 
 class ScoreBoardMode(Mode):
-    pass
-
-class EasyMode(Mode):
     pass
 
 class MediumMode(Mode):
@@ -156,10 +156,11 @@ class MyModalApp(ModalApp):
     def appStarted(app):
         app.splashScreenMode = SplashScreenMode()
         app.howToPlayMode = HowToPlayMode()
-        app.scoreBoardMode = ScoreBoardMode()
-        app.mediumMode = MediumMode()
+        #app.scoreBoardMode = ScoreBoardMode()
+        #app.mediumMode = MediumMode()
         app.easyMode = EasyMode()
-        app.hardModeode = HardMode()
+        #app.hardMode = HardMode()
+        #app.gameAIMode = GameAIMode()
         app.setActiveMode(app.splashScreenMode)
         #app.timerDelay = 50
 
