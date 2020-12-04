@@ -260,55 +260,56 @@ class EasyMode(Mode):
 
     def createSolution(mode):
     # Citation: hackerearth, geeksforgeeks (see Citations section at top for more details)
-        nodesList = [] # init
+        nodesQueue = [] # init
         (targetRow, targetCol) = (0, 0)
         childToParentDict = dict() # child: parent (no multiples)
 
         def BFSearch(mode, row, col):  #row, col = starting node
-            # base cases
-            '''
-            if (row,col) in mode.visited: 
-                print('did base case1')
-                return False
-            '''
-            mode.visited.append((row,col))
-            if (row,col)==(targetRow,targetCol): 
-                print('did base case2')
-                return True
+            #mode.visited[row][col] = True
+            print('started BFSearch')
+            mode.visited[row][col] = True # visit given source node
+            nodesQueue.append((row, col)) # enqueue given source node
 
-            # recursive case
-            mode.visited[mode.mazeRows-1][mode.mazeCols-1] = True # source node
-            print('##############################')
-            print(f'Current cell = ({row},{col})')
-            for direction in mode.nodeSearchDirections:
-                (drow, dcol) = direction # N, E, S, W
-                (neighborRow, neighborCol) = (row+drow, col+dcol) #the neighbor node
-                
-                print('---direction=', direction, '=', (mode.validMove(row, col, direction) and not mode.visited[neighborRow][neighborCol]))
-                
-                if (mode.validMove(row, col, direction) == True and 
-                    mode.visited[neighborRow][neighborCol] == False):
-                    print('--------got to if statement!')
-                    childToParentDict[(neighborRow, neighborCol)] = (row, col) # child: parent
-                    mode.visited[neighborRow][neighborCol] = True # marked as visited, this is now (currRow, currCol)
-                    nodesList.insert(0,(neighborRow, neighborCol)) # FI of FIFO
-                    print('--------nodesList=', nodesList)
-                else:
-                    print('--------do nothing')
-            nodesList.pop(0) # FO of FIFO
-            for (nodeRow, nodeRow) in nodesList:
-                print('gonna do recursion...')
-                BFSearch(mode, nodeRow, nodeRow)
-                print('just did recursion!')
-        
+            while len(nodesQueue) != 0:
+                print('---in while loop')
+                (curRow, curCol) = nodesQueue.pop(0) # FO of FIFO
+                print('---currNode=', (curRow, curCol))
+                if (curRow, curCol) == (targetRow, targetCol):
+                    print('FOUND SOLUTION!!!!!!!!!!!!!!!')
+                    return True # exit loop
+
+                #loop over neighbors
+                for direction in mode.nodeSearchDirections:
+                    print('---started for loop')
+                    (drow, dcol) = direction # N, E, S, W
+                    print('--------direction=', direction)
+                    if mode.validMove(row, col, direction) == True: 
+                        print('------------...isValid!')
+                        (neighborRow, neighborCol) = (curRow+drow, curCol+dcol) #the neighbor node
+                        print('------------visited=', mode.visited[neighborRow][neighborCol])
+                        print('------------neighbor=', (neighborRow, neighborCol))
+                        if mode.visited[neighborRow][neighborCol] == False:
+                            childToParentDict[(neighborRow, neighborCol)] = (row, col) # child: parent
+                            print('-------------------{child:parent}', childToParentDict)
+                            mode.visited[neighborRow][neighborCol] = True # marked as visited, this is now (currRow, currCol)
+                            print('-------------------mode.visited=', mode.visited)
+                            nodesQueue.append((neighborRow, neighborCol)) # FI of FIFO
+                            print('-------------------nodesQueue=', nodesQueue)
+            print('nodesQueue should be 0=', nodesQueue)
+            print('exited while loop')
+            return False
+
         # walking back from target (gold) --> start (mint)
         def getSolution(mode, row, col): # (row, col) = starting cell of path
+            print('started getSolution')
             # base case
             if (row, col) == (mode.mazeRows-1, mode.mazeCols-1):
+                print('getSolution base case')
                 return [(mode.mazeRows-1, mode.mazeCols-1)]
             # recursion
+            print('in recursion step')
             (parentRow, parentCol) = childToParentDict[(row, col)]
-            mode.solution = [(row,col)] +  getSolution(parentRow, parentCol)
+            mode.solution = [(row,col)] +  getSolution(mode, parentRow, parentCol)
                  
         if BFSearch(mode, mode.mazeRows-1, mode.mazeCols-1) == True: #solution can be found from given source node
             print('SOLUTION=', mode.solution)
