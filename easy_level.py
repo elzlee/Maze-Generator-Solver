@@ -110,7 +110,7 @@ class EasyMode(Mode):
         b2cy = mode.mazeCY
         if (((b2cx - mode.buttonW/2) <= event.x <= (b2cx + mode.buttonW/2)) and
             ((b2cy - mode.buttonH/2) <= event.y <= (b2cy + mode.buttonH/2))):
-            mode.showSolution = True
+            mode.showSolution = not mode.showSolution
 
         # BUTTON: 'menu'
         b3cx = mode.width/2
@@ -251,12 +251,14 @@ class EasyMode(Mode):
                     canvas.create_line(x0, y1, x1, y1, fill=mode.mint, width=3)
               
     ####################### maze solving #######################
-    def drawSolution(mode, canvas):
-        
-        for (row, col) in mode.solution:
+    def drawSolution(mode, canvas): 
+        for row in range(mode.mazeRows):
+            for col in range(mode.mazeCols):
                 (x0, y0, x1, y1) = mode.getCellBounds(row, col) 
-                if mode.solution[row][col] == True:
+                if (row, col) in mode.solution:
                     canvas.create_rectangle(x0, y0, x1, y1, fill=mode.mint, width = 0)
+                else:
+                    canvas.create_rectangle(x0, y0, x1, y1, fill=mode.red, width = 0)
 
     def createSolution(mode):
     # Citation: hackerearth, geeksforgeeks (see Citations section at top for more details)
@@ -266,54 +268,53 @@ class EasyMode(Mode):
 
         def BFSearch(mode, row, col):  #row, col = starting node
             #mode.visited[row][col] = True
-            print('started BFSearch')
             mode.visited[row][col] = True # visit given source node
             nodesQueue.append((row, col)) # enqueue given source node
 
             while len(nodesQueue) != 0:
-                print('---in while loop')
                 (curRow, curCol) = nodesQueue.pop(0) # FO of FIFO
-                print('---currNode=', (curRow, curCol))
+                #print('############################')
+                #print('current=', (curRow, curCol))
+                #print('currently visited=', mode.visited)
                 if (curRow, curCol) == (targetRow, targetCol):
-                    print('FOUND SOLUTION!!!!!!!!!!!!!!!')
                     return True # exit loop
 
                 #loop over neighbors
                 for direction in mode.nodeSearchDirections:
-                    print('---started for loop')
                     (drow, dcol) = direction # N, E, S, W
-                    print('--------direction=', direction)
-                    if mode.validMove(row, col, direction) == True: 
-                        print('------------...isValid!')
+                    #print('direction=', direction, '=', mode.validMove(curRow, curCol, direction))
+                    # print('cell wall closed? =', mode.grid[])
+                    if mode.validMove(curRow, curCol, direction) == True: 
                         (neighborRow, neighborCol) = (curRow+drow, curCol+dcol) #the neighbor node
-                        print('------------visited=', mode.visited[neighborRow][neighborCol])
-                        print('------------neighbor=', (neighborRow, neighborCol))
                         if mode.visited[neighborRow][neighborCol] == False:
-                            childToParentDict[(neighborRow, neighborCol)] = (row, col) # child: parent
-                            print('-------------------{child:parent}', childToParentDict)
+                            #print('---not visited')
+                            #print('---neighbor now=',(neighborRow, neighborCol))
+                            childToParentDict[(neighborRow, neighborCol)] = (curRow, curCol) # {child: parent}
                             mode.visited[neighborRow][neighborCol] = True # marked as visited, this is now (currRow, currCol)
-                            print('-------------------mode.visited=', mode.visited)
                             nodesQueue.append((neighborRow, neighborCol)) # FI of FIFO
-                            print('-------------------nodesQueue=', nodesQueue)
-            print('nodesQueue should be 0=', nodesQueue)
-            print('exited while loop')
+                        #else: print('---visited')
             return False
 
         # walking back from target (gold) --> start (mint)
         def getSolution(mode, row, col): # (row, col) = starting cell of path
-            print('started getSolution')
             # base case
             if (row, col) == (mode.mazeRows-1, mode.mazeCols-1):
-                print('getSolution base case')
+                #print('getSolution base case')
                 return [(mode.mazeRows-1, mode.mazeCols-1)]
             # recursion
-            print('in recursion step')
-            (parentRow, parentCol) = childToParentDict[(row, col)]
-            mode.solution = [(row,col)] +  getSolution(mode, parentRow, parentCol)
+            else:
+                #print('in recursion step')
+                (parentRow, parentCol) = childToParentDict[(row, col)]
+                #print('parent=', (parentRow, parentCol))
+                mode.solution = [(row,col)] +  getSolution(mode, parentRow, parentCol)
+                #print('getSolution-->', mode.solution)
+                return mode.solution
                  
         if BFSearch(mode, mode.mazeRows-1, mode.mazeCols-1) == True: #solution can be found from given source node
-            print('SOLUTION=', mode.solution)
-            return getSolution(mode, targetRow, targetCol)  # return (row, col) tuples of solution path
+            #print('dict=', childToParentDict)
+            solution = getSolution(mode, targetRow, targetCol)
+            #print('SOLUTION=', mode.solution)
+            return solution # return (row, col) tuples of solution path
         else: 
             return False
 
