@@ -79,11 +79,14 @@ class AIMode_class(Mode):
         mode.nodeSearchDirections = [NORTH, EAST, SOUTH, WEST] 
         #mode.visited = [[False] * mode.mazeCols for i in range(mode.mazeRows)] # 2d list, True=visited
         mode.visited = []
+        mode.currentVisitedCellIndex = 0
         mode.distance = [[0] * mode.mazeCols for i in range(mode.mazeRows)] # 2d list, distance from Source Node
         mode.predeterminedEdgeValue = 1 # can change for diff graphs
         mode.edgeValuesDict = mode.createEdgeValuesDict()
         mode.aiSolution  = [] # list of tuples
         mode.createSolution()
+        mode.aiDrawClock = 0
+        mode.visitedCellsDrawn = []
 
         # flags
         mode.aiSolvedMaze = False
@@ -377,7 +380,12 @@ class AIMode_class(Mode):
 
     def timerFired(mode):
         #mode.doAIPathfindingStep()
-        pass
+        mode.aiDrawClock += 1
+        if mode.aiDrawClock % 5 == 0 : #100ms * 50 = 0.5 sec passed
+            mode.getCurrentVisitedCellIndex()
+
+    def getCurrentVisitedCellIndex(mode):
+        mode.currentVisitedCellIndex += 1
 
     def drawAIVisitedCells(mode, canvas):
     # ai maze solving HELPER function
@@ -390,11 +398,16 @@ class AIMode_class(Mode):
                     canvas.create_rectangle(x0, y0, x1, y1, fill=mode.red, width = 0)
                     #time.sleep(1)
         '''
+        '''
         for (row, col) in mode.visited:
             (x0, y0, x1, y1) = mode.getCellBounds(row, col, 'aiMaze') 
             canvas.create_rectangle(x0, y0, x1, y1, fill=mode.red, width = 0)
             #time.sleep(1)
-
+        '''
+        index = mode.currentVisitedCellIndex
+        (row, col) = mode.visited[index]
+        (x0, y0, x1, y1) = mode.getCellBounds(row, col, 'aiMaze') 
+        canvas.create_rectangle(x0, y0, x1, y1, fill=mode.red, width = 0)
 
     def drawAISolution(mode, canvas): # DONE
     # ai maze solving HELPER function
