@@ -13,6 +13,7 @@
 import math, copy, random
 from cmu_112_graphics import *
 from tkinter import *
+import time
 
 ####################### mazeCell #######################
 class MazeCell(object):
@@ -44,8 +45,8 @@ class AIMode_class(Mode):
 
         # general
         mode.cellSize = 25
-        mode.mazeRows = 4
-        mode.mazeCols = 4
+        mode.mazeRows = 20
+        mode.mazeCols = 20
         mode.mazeCellColor = mode.white
         mode.mazeWallColor = mode.red
         mode.winner = None
@@ -76,7 +77,8 @@ class AIMode_class(Mode):
 
         # ai pathfinding
         mode.nodeSearchDirections = [NORTH, EAST, SOUTH, WEST] 
-        mode.visited = [[False] * mode.mazeCols for i in range(mode.mazeRows)] # 2d list, True=visited
+        #mode.visited = [[False] * mode.mazeCols for i in range(mode.mazeRows)] # 2d list, True=visited
+        mode.visited = []
         mode.distance = [[0] * mode.mazeCols for i in range(mode.mazeRows)] # 2d list, distance from Source Node
         mode.predeterminedEdgeValue = 1 # can change for diff graphs
         mode.edgeValuesDict = mode.createEdgeValuesDict()
@@ -166,8 +168,8 @@ class AIMode_class(Mode):
         # last cell: direction info not needed for last cell
         mode.userGrid[mode.mazeRows - 1][mode.mazeCols - 1] = MazeCell(False, True, True, False)
         mode.aiGrid[mode.mazeRows - 1][mode.mazeCols - 1] = MazeCell(False, True, True, False)
-        print('usergrid=', mode.userGrid)
-        print('aigrid=', mode.aiGrid)
+        #print('usergrid=', mode.userGrid)
+        #print('aigrid=', mode.aiGrid)
         return mode.userGrid, mode.aiGrid # modified list
 
     def undoOverDrawnWall(mode, row, col, mazeType): #DONE
@@ -306,26 +308,8 @@ class AIMode_class(Mode):
             canvas.create_rectangle(x0, y0, x1, y1, fill=mode.mint, width = 0)
  
 ####################### (ai) maze solving #######################
-    def drawAIVisitedCells(mode, canvas):
-        for row in range(mode.mazeRows):
-            for col in range(mode.mazeCols):
-                (x0, y0, x1, y1) = mode.getCellBounds(row, col, 'aiMaze') 
-                if (row, col) in mode.aiSolution:
-                    canvas.create_rectangle(x0, y0, x1, y1, fill=mode.mint, width = 0)
 
-    def drawAISolution(mode, canvas): # DONE
-        #should be similar, change variables
-        #print(mode.aiSolution)
-        for row in range(mode.mazeRows):
-            for col in range(mode.mazeCols):
-                (x0, y0, x1, y1) = mode.getCellBounds(row, col, 'aiMaze') 
-                if (row, col) in mode.aiSolution:
-                    canvas.create_rectangle(x0, y0, x1, y1, fill=mode.mint, width = 0)
-                else:
-                    canvas.create_rectangle(x0, y0, x1, y1, fill=mode.red, width = 0)
-
-
-    def createSolution(mode): #dijkstra --> update to visualization after MVP
+    def createSolution(mode):
     # Citation: geeksforgeeks, wikipedia (see Citations section at top for more details)
     # No copied code!
         # priorityQueue is just a normal list
@@ -333,21 +317,20 @@ class AIMode_class(Mode):
         (targetRow, targetCol) = (0, 0)
 
         def dijkstraSPT(mode, row, col):
+            print('here')
             tieBreaker = 0
             # set up Source Node
-            mode.visited[row][col] = True 
+            #mode.visited[row][col] = True 
+            mode.visited.append((row, col))
             mode.distance[row][col] = 0
             priorityQueue.append((mode.distance[row][col], tieBreaker, (row, col))) # enqueue given source node
 
             while len(priorityQueue) != 0:
                 # next-up in priorityQueue!
                 priorityQueue.sort()
-                print('priorityQueue=', priorityQueue)
+                #print('priorityQueue=', priorityQueue)
                 (d, t, (curRow, curCol)) = priorityQueue.pop(0) # pop node w/ smallest distance & tiebreaker
                 if (curRow, curCol) == (targetRow, targetCol):
-                    print('mode.visited=', mode.visited)
-                    print('mode.distance=', mode.distance)
-
                     return True # exit loop
 
                 #loop over neighbors
@@ -355,9 +338,11 @@ class AIMode_class(Mode):
                     (drow, dcol) = direction # N, E, S, W 
                     if mode.validMove(curRow, curCol, direction, 'aiMaze') == True:
                         (neighborRow, neighborCol) = (curRow+drow, curCol+dcol) #the neighbor node
-                        if mode.visited[neighborRow][neighborCol] == False:
+                        # if mode.visited[neighborRow][neighborCol] == False:
+                        if (neighborRow, neighborCol) not in mode.visited:
                             tieBreaker += 1
-                            mode.visited[neighborRow][neighborCol] = True
+                            #mode.visited[neighborRow][neighborCol] = True
+                            mode.visited.append((neighborRow, neighborCol))
                             mode.distance[neighborRow][neighborCol] = (mode.edgeValuesDict[((curRow, curCol), (neighborRow, neighborCol))]
                                                                         + mode.distance[curRow][curCol])
                             updatedDistance = mode.distance[neighborRow][neighborCol]
@@ -383,20 +368,50 @@ class AIMode_class(Mode):
 
         if dijkstraSPT(mode, mode.mazeRows-1, mode.mazeCols-1) == True: #solution found from given source node
             mode.aiSolution = getShortestPath(mode, targetRow, targetCol)
-            #print(mode.aiSolution)
+            print('solution=', mode.aiSolution)
+            print('visited=', mode.visited)
             return mode.aiSolution # return (row, col) tuples of solution path
         else: 
+            print('else')
             return False
-
-    def doAIPathfindingStep(mode):
-        # LATER: change createSolution to step by step
-        pass
 
     def timerFired(mode):
         #mode.doAIPathfindingStep()
         pass
 
+    def drawAIVisitedCells(mode, canvas):
+    # ai maze solving HELPER function
+        '''
+        for row in range(mode.mazeRows):
+            for col in range(mode.mazeCols):
+                # if mode.visited[row][col] == True:
+                if (row, col) in mode.visited:
+                    (x0, y0, x1, y1) = mode.getCellBounds(row, col, 'aiMaze') 
+                    canvas.create_rectangle(x0, y0, x1, y1, fill=mode.red, width = 0)
+                    #time.sleep(1)
+        '''
+        for (row, col) in mode.visited:
+            (x0, y0, x1, y1) = mode.getCellBounds(row, col, 'aiMaze') 
+            canvas.create_rectangle(x0, y0, x1, y1, fill=mode.red, width = 0)
+            #time.sleep(1)
 
+
+    def drawAISolution(mode, canvas): # DONE
+    # ai maze solving HELPER function
+        for row in range(mode.mazeRows):
+            for col in range(mode.mazeCols):
+                (x0, y0, x1, y1) = mode.getCellBounds(row, col, 'aiMaze') 
+                if (row, col) in mode.aiSolution:
+                    canvas.create_rectangle(x0, y0, x1, y1, fill=mode.mint, width = 0)
+                else:
+                    canvas.create_rectangle(x0, y0, x1, y1, fill=mode.red, width = 0)
+
+    def drawAIMazeProgress(mode, canvas):
+    # ai maze solving MAIN function
+        mode.drawAIVisitedCells(canvas)
+        (targetRow, targetCol) = (0, 0)
+        #if mode.visited[targetRow][targetCol] == True:
+            #mode.drawAISolution(canvas)
 ####################### extra features #######################
     def drawGameButtons(mode, canvas):
         # return to menu button = bottom center
@@ -438,7 +453,9 @@ class AIMode_class(Mode):
         mode.drawAIMaze(canvas)
         mode.drawGameButtons(canvas)
         mode.drawUserPath(canvas)
-        mode.drawAISolution(canvas)
+        # mode.drawAISolution(canvas)
+        mode.drawAIMazeProgress(canvas)
+        '''
         if mode.gameOver == False:
             mode.drawPlayerLabels(canvas)
         else: # mode.gameOver = True
@@ -452,4 +469,4 @@ class AIMode_class(Mode):
         elif (mode.userSolvedMaze == True) and (mode.aiSolvedMaze == False):
             # color in the winner maze
             # draw text 'user win'
-            pass
+        '''
