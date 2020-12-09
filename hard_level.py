@@ -48,6 +48,9 @@ class HardMode(Mode):
         mode.mazeTopLeftCornerY = mode.mazeCY - (mode.cellSize * mode.mazeRows / 2)
         mode.mazeCellColor = mode.white
         mode.mazeWallColor = mode.red
+        mode.buttonFont = ('Calibri', 15)
+        mode.buttonH = 50 # height
+        mode.buttonW = 200 # width
 
         # maze generation - Prim's
         mode.primSearchDirections = [NORTH, EAST, SOUTH, WEST] 
@@ -70,30 +73,29 @@ class HardMode(Mode):
         mode.userStartedMaze = False
         mode.userSolvedMaze = False
 
-        # extra
-        mode.buttonFont = ('Calibri', 15)
-        mode.buttonH = 50 # height
-        mode.buttonW = 200 # width
+        # pathfinding: solution, hint
+        mode.showSolution = False
+        mode.showHint = False
+        mode.currNode = (mode.mazeRows-1, mode.mazeCols-1) # init
+        mode.visited = [[False] * mode.mazeCols for i in range(mode.mazeRows)] # 2d list of maze cells, True=visited
+        mode.nodeSearchDirections = [NORTH, EAST, SOUTH, WEST] 
+        mode.solution = [] # list of tuples
+        mode.createSolution()
 
-    '''
-    def createEdgeValuesDict(mode):
-    # Saving edge values is unnecessary for my specific mazes, but
-    # this maintains the spirit of Dijkstra's algorithm.
-    # mode.edgeValuesDict can be manually edited for other graphs
-    # to assign varying edge values (instead of constant value mode.predeterminedEdgeValue=1)
-        # key: ((row1, col1), (row2, col2))
-        # value: edge value between cell1 and cell2
-        mode.edgeValuesDict = dict()
-        for row in range(mode.mazeRows):
-            for col in range(mode.mazeCols):
-                curRow, curCol = row, col
-                for direction in mode.primSearchDirections: # N, E, S, W
-                    (drow, dcol) = direction 
-                    if mode.validMove(curRow, curCol, direction, 'aiMaze') == True: 
-                        (neighborRow, neighborCol) = (curRow+drow, curCol+dcol)
-                        mode.edgeValuesDict[((curRow, curCol), (neighborRow, neighborCol))] = mode.predeterminedEdgeValue
-        return mode.edgeValuesDict
-    '''
+        # timer
+        mode.elapsedTime = 0
+        mode.elapsedSeconds = 0
+        mode.seconds = 0
+        mode.minutes = 0
+        mode.timerFont = ('Calibri', 80)
+
+        # timer
+        mode.elapsedTime = 0
+        mode.elapsedSeconds = 0
+        mode.seconds = 0
+        mode.minutes = 0
+        mode.timerFont = ('Calibri', 80)
+        mode.timerDelay = 82.5
 
     def getCellBounds(mode, row, col): 
     # Citation: CMU 15112 course notes
@@ -115,8 +117,8 @@ class HardMode(Mode):
         counter = 0
         while len(mode.visitedPrim) <= mode.mazeRows * mode.mazeCols - 1:
         # while there are unvisited cells
-            print('##########################')
-            print('iteration', counter)
+            #print('##########################')
+            #print('iteration', counter)
             #if counter == 4: break
             # add to Frontier list: Unvisited neighbors of curCell 
             visitedNeighborsOfFrontierCell = []
@@ -127,13 +129,13 @@ class HardMode(Mode):
                     (neighborRow, neighborCol) = (curRow+drow, curCol+dcol) #the neighbor node
                     if (neighborRow, neighborCol) not in (mode.visitedPrim + mode.frontier):
                         mode.frontier.append((neighborRow, neighborCol))
-                        print('visitedPrim=', mode.visitedPrim)
+                        #print('visitedPrim=', mode.visitedPrim)
             # from now on, curCell doesn't matter!!! very cool
 
             # randomly choose 1 frontier cell from list
             randomIndex = random.randint(0, len(mode.frontier) - 1) 
             (chosenFrontierRow, chosenFrontierCol) = mode.frontier[randomIndex] 
-            print('frontier=', mode.frontier)
+            #print('frontier=', mode.frontier)
 
             # create list of fNeighbors of the frontier cells
             for direction in mode.primSearchDirections:
@@ -154,8 +156,8 @@ class HardMode(Mode):
             elif chosenFNeighborCol == chosenFrontierCol -1: location = 'west'
 
             # carve passage
-            print('chosenFrontier visited?=', (chosenFrontierRow, chosenFrontierCol),(chosenFrontierRow, chosenFrontierCol) in mode.visitedPrim)
-            print('chosenFNeighbor visited?=', (chosenFNeighborRow, chosenFNeighborCol), (chosenFNeighborRow, chosenFNeighborCol) in mode.visitedPrim)
+            #print('chosenFrontier visited?=', (chosenFrontierRow, chosenFrontierCol),(chosenFrontierRow, chosenFrontierCol) in mode.visitedPrim)
+            #print('chosenFNeighbor visited?=', (chosenFNeighborRow, chosenFNeighborCol), (chosenFNeighborRow, chosenFNeighborCol) in mode.visitedPrim)
             chosenFrontierCell = mode.grid[chosenFrontierRow][chosenFrontierCol]
             chosenFNeighborCell = mode.grid[chosenFNeighborRow][chosenFNeighborCol]
             if location == 'north':
@@ -181,9 +183,9 @@ class HardMode(Mode):
 
             counter +=1 
             
-            print('mode.visitedPrim=', mode.visitedPrim)
+            #print('mode.visitedPrim=', mode.visitedPrim)
  
-          
+            '''
             for row in (0, 1,2):
                 for col in (0,1,2):    
                     print('###############')
@@ -191,7 +193,7 @@ class HardMode(Mode):
                     print(mode.grid[row][col].east)
                     print(mode.grid[row][col].south)
                     print(mode.grid[row][col].west)
-            
+            '''
         return mode.grid # modified list
     
     
@@ -205,14 +207,14 @@ class HardMode(Mode):
             return True
 
     def drawMaze(mode, canvas):
-        '''
+
         # thicker border
         halfwidth = mode.mazeCols * mode.cellSize / 2
         halfheight = mode.mazeRows * mode.cellSize / 2
         canvas.create_rectangle(mode.mazeCX-halfwidth, mode.mazeCY-halfheight,
                                 mode.mazeCX+halfwidth, mode.mazeCY+halfheight, 
                                 outline=mode.red, width=6)
-        '''                       
+                  
         for row in range(mode.mazeRows):
             for col in range(mode.mazeCols):
                 (x0, y0, x1, y1) = mode.getCellBounds(row, col) 
@@ -220,7 +222,7 @@ class HardMode(Mode):
                 
                 # maze cell color
                 canvas.create_rectangle(x0, y0, x1, y1, fill=mode.mazeCellColor, width=0)
-                '''
+
                 # gold End square
                 if (row, col) == (0, 0):
                     color = mode.gold
@@ -229,7 +231,7 @@ class HardMode(Mode):
                 # mint Start square
                 if (row, col) == (mode.mazeRows-1, mode.mazeCols-1):
                     canvas.create_rectangle(x0, y0, x1, y1, fill=mode.mint, width=0)
-                '''
+
                 # draw red maze lines
                 if currCell.north == True:
                     canvas.create_line(x0, y0, x1, y0, fill=mode.mazeWallColor, width=1)
@@ -240,16 +242,16 @@ class HardMode(Mode):
                 if currCell.west == True:
                     canvas.create_line(x0, y0, x0, y1, fill=mode.mazeWallColor, width=1)
 
-                '''
+
                 # mint walls for start & end
                 if (row, col) == (0, 0):
                     canvas.create_line(x0, y0, x1, y0, fill=mode.mint, width=6)
                 if (row, col) == (mode.mazeRows-1, mode.mazeCols-1):
                     canvas.create_line(x0, y1, x1, y1, fill=mode.mint, width=6)
-                '''
+
     
     ####################### user interaction #######################
-    '''
+
     def mousePressed(mode, event):        
         # BUTTON: 'hint'
         b1cx = (mode.mazeCX - (mode.mazeCols * mode.cellSize) / 2) / 2
@@ -271,7 +273,7 @@ class HardMode(Mode):
         if (((b3cx - mode.buttonW/2) <= event.x <= (b3cx + mode.buttonW/2)) and 
             ((b3cy - mode.buttonH/2) <= event.y <= (b3cy + mode.buttonH/2))):
             mode.app.setActiveMode(mode.app.splashScreenMode)
-        '''
+
     def keyPressed(mode, event):
         (row, col) = mode.userPosition
         if mode.userStartedMaze == False: 
@@ -320,31 +322,167 @@ class HardMode(Mode):
         if mode.userPosition == (0,0): 
             mode.userSolvedMaze = True
 
-
-    #def undoUserMove(mode, row, col):
-
     def drawUserPath(mode, canvas):
         for (row, col) in mode.userPath:
             (x0, y0, x1, y1) = mode.getCellBounds(row, col)
             canvas.create_rectangle(x0, y0, x1, y1, fill=mode.mint, width = 0)
 
+    ####################### maze solving #######################
+    def drawSolution(mode, canvas): 
+        for row in range(mode.mazeRows):
+            for col in range(mode.mazeCols):
+                (x0, y0, x1, y1) = mode.getCellBounds(row, col) 
+                if (row, col) in mode.solution:
+                    canvas.create_rectangle(x0, y0, x1, y1, fill=mode.mint, width = 0)
+                else:
+                    canvas.create_rectangle(x0, y0, x1, y1, fill=mode.red, width = 0)
+
+    def createSolution(mode):
+    # Citation: hackerearth, geeksforgeeks (see Citations section at top for more details)
+    # No copied code!
+        nodesQueue = [] # init
+        childToParentDict = dict() # child: parent (no multiples)
+
+        def BFSearch(mode, row, col):  #row, col = starting node
+            mode.visited[row][col] = True # visit given source node
+            nodesQueue.append((row, col)) # enqueue given source node
+
+            while len(nodesQueue) != 0:
+                (curRow, curCol) = nodesQueue.pop(0) # FO of FIFO
+                if (curRow, curCol) == (mode.targetRow, mode.targetCol):
+                    return True # exit loop
+
+                #loop over neighbors
+                for direction in mode.nodeSearchDirections:
+                    (drow, dcol) = direction # N, E, S, W
+                    if mode.validMove(curRow, curCol, direction) == True: 
+                        (neighborRow, neighborCol) = (curRow+drow, curCol+dcol) #the neighbor node
+                        if mode.visited[neighborRow][neighborCol] == False:
+                            childToParentDict[(neighborRow, neighborCol)] = (curRow, curCol) # {child: parent}
+                            mode.visited[neighborRow][neighborCol] = True # marked as visited, this is now (currRow, currCol)
+                            nodesQueue.append((neighborRow, neighborCol)) # FI of FIFO
+            return False
+
+        # walking back from target (gold) --> start (mint)
+        def getSolution(mode, row, col): # (row, col) = starting cell of path
+            # base case
+            if (row, col) == (mode.mazeRows-1, mode.mazeCols-1):
+                return [(mode.mazeRows-1, mode.mazeCols-1)]
+            # recursion
+            else:
+                (parentRow, parentCol) = childToParentDict[(row, col)]
+                mode.solution = [(row,col)] +  getSolution(mode, parentRow, parentCol)
+                return mode.solution
+                 
+        if BFSearch(mode, mode.mazeRows-1, mode.mazeCols-1) == True: #solution can be found from given source node
+            solution = getSolution(mode, mode.targetRow, mode.targetCol)
+            return solution # return (row, col) tuples of solution path
+        else: 
+            return False
+
+    ####################### timer #######################           
+    def timerFired(mode):
+        if mode.userStartedMaze == True and mode.userSolvedMaze == False and mode.showSolution == False:
+            mode.elapsedTime += 1
+            if mode.elapsedTime % 10 == 0:
+                mode.elapsedSeconds += 1
+                print(mode.elapsedSeconds)
+                mode.getElapsedMinutesAndSeconds()
+                print('delay=', mode.timerDelay)
+    
+    def getElapsedMinutesAndSeconds(mode):
+        mode.minutes = mode.elapsedSeconds // 60
+        mode.seconds = mode.elapsedSeconds % 60
+
+    def drawTimer(mode, canvas):
+        if mode.seconds == 0: seconds = '00'
+        elif mode.seconds < 10: seconds = '0' + str(mode.seconds)
+        else: seconds = str(mode.seconds)
+
+        if mode.minutes == 0: minutes = '00'
+        elif mode.seconds < 10: minutes = '0' + str(mode.minutes)
+        else: minutes = str(mode.minutes)
+
+        timerText = minutes + ':' + seconds
+        canvas.create_text(mode.width/2, 75, text=timerText, 
+                            font=mode.timerFont, fill=mode.white)
+    
+
+    ####################### extra features #######################    
+
+    def drawHintButton(mode, canvas):
+        # hint button = left
+        b1cx = (mode.mazeCX - (mode.mazeCols * mode.cellSize) / 2) / 2
+        b1cy = mode.mazeCY
+        canvas.create_rectangle(b1cx - mode.buttonW/2, b1cy - mode.buttonH/2, 
+                                b1cx + mode.buttonW/2, b1cy + mode.buttonH/2, 
+                                fill=mode.white, width=0)
+        canvas.create_text(b1cx, b1cy, text='hint', 
+                            font=mode.buttonFont, fill=mode.red)
+    def drawSolutionButton(mode, canvas):
+        # solution button = right
+        b1cx = (mode.mazeCX - (mode.mazeCols * mode.cellSize) / 2) / 2
+        b2cx = mode.width - b1cx
+        b2cy = mode.mazeCY
+        canvas.create_rectangle(b2cx - mode.buttonW/2, b2cy - mode.buttonH/2, 
+                                b2cx + mode.buttonW/2, b2cy + mode.buttonH/2, 
+                                fill=mode.red, width=0)
+        canvas.create_text(b2cx, b2cy, text='give up', 
+                            font=mode.buttonFont, fill=mode.white)
+
+    def drawMenuButton(mode, canvas):
+        # return to menu button = bottom center
+        b3cx = mode.width/2
+        b3cy = mode.height - 50 
+        canvas.create_rectangle(b3cx - mode.buttonW/2, b3cy - mode.buttonH/2, 
+                                b3cx + mode.buttonW/2, b3cy + mode.buttonH/2, 
+                                fill=mode.red, width=0)
+        canvas.create_text(b3cx, b3cy, text='MENU', 
+                            font=mode.buttonFont, fill=mode.white)
+
+    def drawMintToGoldInstructions(mode, canvas):
+        canvas.create_text(mode.width/2, 687.5, text='Start at the mint, and finish at the gold...', 
+                            font=mode.buttonFont, fill=mode.white)
+    def drawSolvedText(mode, canvas):
+        canvas.create_text(mode.width/2, 687.5, text='Solved!', 
+                            font=mode.buttonFont, fill=mode.white)
+    def drawSolvedRed(mode, canvas):
+        for row in range(mode.mazeRows):
+            for col in range(mode.mazeCols):
+                (x0, y0, x1, y1) = mode.getCellBounds(row, col) 
+                if (row, col) not in mode.solution:
+                    canvas.create_rectangle(x0, y0, x1, y1, fill=mode.red, width = 0)
+    def drawKeepGoing(mode, canvas):
+        canvas.create_text(mode.width/2, 687.5, text='Keep going!', 
+                            font=mode.buttonFont, fill=mode.white)
+    def drawTryAnotherMaze(mode, canvas):
+        canvas.create_text(mode.width/2, 687.5, text='Return to menu to try another maze!', 
+                            font=mode.buttonFont, fill=mode.white)
     #######################
     def redrawAll(mode, canvas):
-        #screen background
-        canvas.create_rectangle(0, 0, mode.width, mode.height, fill=mode.mint)
+        # always there
+        canvas.create_rectangle(0, 0, mode.width, mode.height, fill=mode.mint) #canvas background
         mode.drawMaze(canvas)
-        mode.drawUserPath(canvas)
-        '''
         mode.drawMenuButton(canvas)
         mode.drawUserPath(canvas)
-        if mode.userStartedMaze == False and mode.showSolution == False:
-            mode.drawMintToGoldInstructions(canvas)
-        if mode.userSolvedMaze == True:
-            mode.drawSolvedText(canvas)
-            mode.drawSolvedRed(canvas)
-        else:
-            mode.drawHintSolutionButtons(canvas)
-        if mode.showSolution == True:
+        
+
+        if mode.showSolution == False:
+            mode.drawTimer(canvas)
+            if mode.userStartedMaze == False :
+                mode.drawMintToGoldInstructions(canvas)
+            elif mode.userStartedMaze == True :
+                if mode.userSolvedMaze == False:
+                    mode.drawKeepGoing(canvas)
+
+            if mode.userSolvedMaze == False:
+                mode.drawSolutionButton(canvas)
+                mode.drawHintButton(canvas)
+            elif mode.userSolvedMaze == True:
+                mode.drawSolvedText(canvas)
+                mode.drawSolvedRed(canvas)
+
+        elif mode.showSolution == True:
             mode.drawSolution(canvas)
-        '''
+            mode.drawTryAnotherMaze(canvas)
 

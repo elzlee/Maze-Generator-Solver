@@ -11,6 +11,7 @@ from how_to_play import *
 from easy_level import *
 from ai_mode import *
 #from medium_level import *
+from hard_level import *
 
 
 # class = capital first letters
@@ -19,22 +20,15 @@ from ai_mode import *
 class ScoreBoardMode(Mode):
     pass
 
-class MediumMode(Mode):
-    pass
-
-class HardMode(Mode):
-    pass
 
 class MyModalApp(ModalApp):
-    def appStarted(app):
+    def modeActivated(app):
         app.splashScreenMode = SplashScreenMode()
         app.howToPlayMode = HowToPlayMode()
         #app.scoreBoardMode = ScoreBoardMode()print('nodesQueue=', nodesQueue)
-        #app.mediumMode = MediumMode()
         app.easyMode = EasyMode()
-        #app.hardMode = HardMode()
+        app.hardMode = HardMode()
         app.aiMode = AIMode_class()
         app.setActiveMode(app.splashScreenMode)
-        #app.timerDelay = 50
 
 app = MyModalApp(width=1200, height=800)

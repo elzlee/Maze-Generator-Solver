@@ -31,15 +31,21 @@ class HowToPlayMode(Mode):
                         '\n'
                         '3 Levels: Easy, Medium, Hard\n'
                         '\n'
-                        'Your score is considered for the Scoreboard\n'
+                        'Your time is considered for the Scoreboard.\n'
+                        '\n'
+                        'If you Give Up, your time will not be considered for the Scoreboard.'
                         '\n'
                         '\n'
                         '\n'
                         '*** GAME AI MODE ***\n' 
                         '\n'
-                        'Random level\n' 
+                        'Always the Hard level.\n' 
                         '\n'
-                        'Your score is NOT considered for the Scoreboard\n' 
+                        'Compete against the game AI!\n'
+                        '\n'
+                        'Your time is NOT considered for the Scoreboard.\n' 
+                        '\n'
+                        'Be ready! The timer and the AI starts as soon as you enter the mode.\n' 
                         '\n'
                         '\n'
                         '\n'
@@ -47,10 +53,10 @@ class HowToPlayMode(Mode):
                         '\n'
                         'Bring the Mint square to the Gold square to complete the maze!\n' 
                         '\n'
-                        'Use the UP/DOWN/LEFT/RIGHT keys to conquer squares.'
+                        'Use the UP/DOWN/LEFT/RIGHT keys to traverse the maze.'
                         )
         canvas.create_text(mode.width/2, mode.height/2, 
-                            font = mode.buttonFont, fill = mode.white,
+                            font = mode.buttonFont, fill = mode.red,
                             text = howToPlayText)
 
     def drawGameButtons(mode, canvas):
