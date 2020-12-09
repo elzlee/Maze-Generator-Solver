@@ -1,6 +1,10 @@
 ##########################################
 # splash screen #
 ##########################################
+# Citations in this file #
+    # CMU 15112 course notes (getCellBounds)
+    # https://www.cs.cmu.edu/~112/notes/notes-animations-part2.html
+##########################################
 
 import math, copy, random
 from cmu_112_graphics import *
@@ -24,6 +28,7 @@ class SplashScreenMode(Mode):
         mode.gold = '#fbbc04'
 
     def getCellBounds(mode, row, col): 
+        # Citation: CMU 15112 course notes
         # returns (x0, y0, x1, y1) corners/bounding box of given cell in grid
         gridWidth  = mode.logoWidth
         gridHeight = mode.logoHeight
@@ -40,9 +45,11 @@ class SplashScreenMode(Mode):
         # BUTTON: 'how to play'
         if (500 <= event.x <= 700) and (500 <= event.y <= 550):
             mode.app.setActiveMode(mode.app.howToPlayMode)
+        '''
         # BUTTON: 'scoreboard'
         if (500 <= event.x <= 700) and (575 <= event.y <= 625):
             mode.app.setActiveMode(mode.app.scoreboardMode)
+        '''
         # BUTTON: 'play against AI'
         if (500 <= event.x <= 700) and (650 <= event.y <= 700):
             mode.app.setActiveMode(mode.app.aiMode)
@@ -99,10 +106,11 @@ class SplashScreenMode(Mode):
         canvas.create_text(mode.width/2, 525,  text='how to play', 
                             font=mode.buttonFont, fill=mode.white)
 
+        '''
         canvas.create_rectangle(500, 575, 700, 625, fill=mode.red, width=0)
         canvas.create_text(mode.width/2, 600,  text='scoreboard', 
                             font=mode.buttonFont, fill=mode.white)
-
+        '''
         canvas.create_rectangle(500, 650, 700, 700, fill=mode.red, width=0)
         canvas.create_text(mode.width/2, 675,  text='play against ai', 
                             font=mode.buttonFont, fill=mode.white)

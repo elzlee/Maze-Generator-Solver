@@ -5,6 +5,9 @@
 # Pathfinding: parent/child connection
 ##########################################
 # Citations referenced in this file #
+    # Jamis Buck (binary tree): 'An Example' section only
+    # http://weblog.jamisbuck.org/2011/2/1/maze-generation-binary-tree-algorithm#
+    
     # hackerearth: 'Pseudocode' section, 'Visualizer' section
     # https://www.hackerearth.com/practice/algorithms/graphs/breadth-first-search/tutorial/
 
@@ -98,6 +101,8 @@ class EasyMode(Mode):
 
     ####################### maze generation #######################
     def createMaze(mode):
+    # Citation: Jamis Buck (binary tree) (see Citations section at top for more details)
+    # No copied code!
         # bias: SOUTH/EAST 
         for row in range(mode.mazeRows):
             for col in range(mode.mazeCols):

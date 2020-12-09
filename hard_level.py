@@ -8,7 +8,8 @@
     # Jamis Buck: 'An Example' section only
     # https://weblog.jamisbuck.org/2011/1/10/maze-generation-prim-s-algorithm
 
-
+    # CMU 15112 course notes (getCellBounds)
+    # https://www.cs.cmu.edu/~112/notes/notes-animations-part2.html
 ##########################################
 
 import math, copy, random
@@ -31,7 +32,7 @@ WEST = (0,-1)
 
 class HardMode(Mode):
     ####################### init #######################
-    def appStarted(mode):
+    def modeActivated(mode):
         #colors shortcut
         mode.mint = '#a2d5c6'
         mode.red = '#b85042'
@@ -63,8 +64,7 @@ class HardMode(Mode):
         mode.frontier = []
         mode.grid = [[MazeCell(True, True, True, True) for j in range(mode.mazeCols)] for i in range(mode.mazeRows)] #board = 2d list
         mode.createMaze()
-        #print('mode.grid=', mode.grid)
-        #print('mode.visitedPrim=', mode.visitedPrim)
+
 
         # user, path
         mode.userPosition = (mode.mazeRows-1, mode.mazeCols-1) #update with row, drow, etc.
@@ -107,19 +107,17 @@ class HardMode(Mode):
         return (x0, y0, x1, y1)
   
     ####################### maze generation #######################
+    # Citation: Jamis Buck (see Citations section at top for more details)
+    # No copied code
 
     def createMaze(mode): # Prim's algorithm
-
         (curRow, curCol) = (mode.mazeGenStartRow, mode.mazeGenStartCol)
         mode.visitedPrim.append((curRow, curCol))
         location = None
-        
-        counter = 0
+
         while len(mode.visitedPrim) <= mode.mazeRows * mode.mazeCols - 1:
         # while there are unvisited cells
-            #print('##########################')
-            #print('iteration', counter)
-            #if counter == 4: break
+
             # add to Frontier list: Unvisited neighbors of curCell 
             visitedNeighborsOfFrontierCell = []
 
@@ -129,13 +127,12 @@ class HardMode(Mode):
                     (neighborRow, neighborCol) = (curRow+drow, curCol+dcol) #the neighbor node
                     if (neighborRow, neighborCol) not in (mode.visitedPrim + mode.frontier):
                         mode.frontier.append((neighborRow, neighborCol))
-                        #print('visitedPrim=', mode.visitedPrim)
+
             # from now on, curCell doesn't matter!!! very cool
 
             # randomly choose 1 frontier cell from list
             randomIndex = random.randint(0, len(mode.frontier) - 1) 
             (chosenFrontierRow, chosenFrontierCol) = mode.frontier[randomIndex] 
-            #print('frontier=', mode.frontier)
 
             # create list of fNeighbors of the frontier cells
             for direction in mode.primSearchDirections:
@@ -156,8 +153,6 @@ class HardMode(Mode):
             elif chosenFNeighborCol == chosenFrontierCol -1: location = 'west'
 
             # carve passage
-            #print('chosenFrontier visited?=', (chosenFrontierRow, chosenFrontierCol),(chosenFrontierRow, chosenFrontierCol) in mode.visitedPrim)
-            #print('chosenFNeighbor visited?=', (chosenFNeighborRow, chosenFNeighborCol), (chosenFNeighborRow, chosenFNeighborCol) in mode.visitedPrim)
             chosenFrontierCell = mode.grid[chosenFrontierRow][chosenFrontierCol]
             chosenFNeighborCell = mode.grid[chosenFNeighborRow][chosenFNeighborCol]
             if location == 'north':
@@ -174,26 +169,12 @@ class HardMode(Mode):
                 chosenFNeighborCell.east = False
 
             # remove from frontier, add to visited
-            #print('frontier:', mode.frontier)
             mode.frontier.remove((chosenFrontierRow, chosenFrontierCol))
             mode.visitedPrim.append((chosenFrontierRow, chosenFrontierCol))
 
             # prepare for new iteration
             (curRow, curCol) = (chosenFrontierRow, chosenFrontierCol)
 
-            counter +=1 
-            
-            #print('mode.visitedPrim=', mode.visitedPrim)
- 
-            '''
-            for row in (0, 1,2):
-                for col in (0,1,2):    
-                    print('###############')
-                    print(mode.grid[row][col].north)
-                    print(mode.grid[row][col].east)
-                    print(mode.grid[row][col].south)
-                    print(mode.grid[row][col].west)
-            '''
         return mode.grid # modified list
     
     
@@ -386,9 +367,7 @@ class HardMode(Mode):
             mode.elapsedTime += 1
             if mode.elapsedTime % 10 == 0:
                 mode.elapsedSeconds += 1
-                print(mode.elapsedSeconds)
                 mode.getElapsedMinutesAndSeconds()
-                print('delay=', mode.timerDelay)
     
     def getElapsedMinutesAndSeconds(mode):
         mode.minutes = mode.elapsedSeconds // 60

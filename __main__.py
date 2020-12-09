@@ -9,23 +9,16 @@ from tkinter import *
 from splash_screen import *
 from how_to_play import *
 from easy_level import *
-from ai_mode import *
-#from medium_level import *
+from bt_ai_mode import *
 from hard_level import *
-
 
 # class = capital first letters
 # functions = camel style 
 
-class ScoreBoardMode(Mode):
-    pass
-
-
 class MyModalApp(ModalApp):
-    def modeActivated(app):
+    def appStarted(app):
         app.splashScreenMode = SplashScreenMode()
         app.howToPlayMode = HowToPlayMode()
-        #app.scoreBoardMode = ScoreBoardMode()print('nodesQueue=', nodesQueue)
         app.easyMode = EasyMode()
         app.hardMode = HardMode()
         app.aiMode = AIMode_class()
