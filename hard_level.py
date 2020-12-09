@@ -40,29 +40,42 @@ class HardMode(Mode):
 
         # general maze 
         mode.cellSize = 25
-        mode.mazeRows = 20
-        mode.mazeCols = 20
+        mode.mazeRows = 5
+        mode.mazeCols = 5
         mode.mazeCX = mode.width/2
         mode.mazeCY = mode.height/2
         mode.mazeTopLeftCornerX = mode.mazeCX - (mode.cellSize * mode.mazeCols / 2)
         mode.mazeTopLeftCornerY = mode.mazeCY - (mode.cellSize * mode.mazeRows / 2)
+        mode.mazeCellColor = mode.white
+        mode.mazeWallColor = mode.red
 
         # maze generation - Prim's
-        mode.grid = [[MazeCell(False, False, False, False)] * mode.mazeCols for i in range(mode.mazeRows)] #board = 2d list
+        mode.primSearchDirections = [NORTH, EAST, SOUTH, WEST] 
         mode.predeterminedEdgeValue = 1 # can change for diff graphs
-        mode.edgeValuesDict = mode.createEdgeValuesDict()
+        #mode.edgeValuesDict = mode.createEdgeValuesDict()
         mode.mazeGenStartRow = mode.mazeRows - 1 # bottom R corner
         mode.mazeGenStartCol = mode.mazeCols - 1 # bottom R corner
         (mode.targetRow, mode.targetCol) = (0, 0) # top L corner
         mode.visitedPrim = []
-        mode.PrimSearchDirections = [NORTH, EAST, SOUTH, WEST] 
         mode.frontier = []
+        mode.grid = [[MazeCell(True, True, True, True)] * mode.mazeCols for i in range(mode.mazeRows)] #board = 2d list
+        mode.createMaze()
+        print('mode.grid=', mode.grid)
+        print('mode.visitedPrim=', mode.visitedPrim)
+
+        # user, path
+        mode.userPosition = (mode.mazeRows-1, mode.mazeCols-1) #update with row, drow, etc.
+        mode.userPath = set() # to be filled...
+        mode.userPath.add((mode.mazeRows-1, mode.mazeCols-1)) # add first position
+        mode.userStartedMaze = False
+        mode.userSolvedMaze = False
 
         # extra
         mode.buttonFont = ('Calibri', 15)
         mode.buttonH = 50 # height
         mode.buttonW = 200 # width
 
+    '''
     def createEdgeValuesDict(mode):
     # Saving edge values is unnecessary for my specific mazes, but
     # this maintains the spirit of Dijkstra's algorithm.
@@ -74,12 +87,13 @@ class HardMode(Mode):
         for row in range(mode.mazeRows):
             for col in range(mode.mazeCols):
                 curRow, curCol = row, col
-                for direction in mode.nodeSearchDirections: # N, E, S, W
+                for direction in mode.primSearchDirections: # N, E, S, W
                     (drow, dcol) = direction 
                     if mode.validMove(curRow, curCol, direction, 'aiMaze') == True: 
                         (neighborRow, neighborCol) = (curRow+drow, curCol+dcol)
                         mode.edgeValuesDict[((curRow, curCol), (neighborRow, neighborCol))] = mode.predeterminedEdgeValue
         return mode.edgeValuesDict
+    '''
 
     def getCellBounds(mode, row, col): 
     # Citation: CMU 15112 course notes
@@ -93,59 +107,78 @@ class HardMode(Mode):
     ####################### maze generation #######################
 
     def createMaze(mode): # Prim's algorithm
-    # Citation: Jamis Buck (see Citations section at top for more details)
-    # No copied code!
+
         (curRow, curCol) = (mode.mazeGenStartRow, mode.mazeGenStartCol)
-        mode.visited.append((curRow, curCol))
+        mode.visitedPrim.append((curRow, curCol))
         location = None
+        neighborsOfFrontierCell = []
+        counter = 0
+        while len(mode.visitedPrim) < mode.mazeRows * mode.mazeCols:
+        # while there are unvisited cells
+            print('got here')
+            if counter == 1: break
+            # add to Frontier list: Unvisited neighbors of curCell 
+            for direction in mode.primSearchDirections:
+                if mode.moveIsWithinBounds(curRow, curCol, direction) == True:
+                    (drow, dcol) = direction # N, E, S, W 
+                    (neighborRow, neighborCol) = (curRow+drow, curCol+dcol) #the neighbor node
+                    if (neighborRow, neighborCol) not in mode.visitedPrim:
+                        mode.frontier.append((neighborRow, neighborCol))
 
-        while len(mode.visited) < mode.mazeRows * mode.mazeCols:
+            # from now on, curCell doesn't matter!!! very cool
 
-            # add to Frontier: Unvisited neighbors of curCell 
-            for direction in mode.PrimSearchDirections:
-                (drow, dcol) = direction # N, E, S, W 
-                (neighborRow, neighborCol) = (curRow+drow, curCol+dcol) #the neighbor node
-                if (neighborRow, neighborCol) not in mode.visited:
-                    mode.frontier.append((neighborRow, neighborCol))
-            
-            # randomly choose 1 frontier cell
+            # randomly choose 1 frontier cell from list
             randomIndex = random.randint(0, len(mode.frontier) - 1) 
             (chosenFrontierRow, chosenFrontierCol) = mode.frontier[randomIndex] 
 
-            # determine chosenCell's LOCATION relative to curCell
-            if chosenFrontierCol == curCol - 1: location = 'north'
-            elif chosenFrontierRow == curRow + 1: location = 'east'
-            elif chosenFrontierCol == curCol + 1: location = 'south'
-            elif chosenFrontierRow == curRow -1: location = 'west'
+            # create list of fNeighbors of the frontier cells
+            for direction in mode.primSearchDirections:
+                if mode.moveIsWithinBounds(chosenFrontierRow, chosenFrontierCol, direction) == True:
+                    (drow, dcol) = direction # N, E, S, W
+                    (fNeighborRow, fNeighborCol) = (chosenFrontierRow+drow, chosenFrontierCol+dcol)
+                    if (fNeighborRow, fNeighborCol) in mode.visitedPrim:
+                        neighborsOfFrontierCell.append((fNeighborRow, fNeighborCol))
+            
+            # randomly choose 1 fNeighbor cell (in case there are more than 1)
+            randomIndex = random.randint(0, len(neighborsOfFrontierCell) - 1) 
+            (chosenFNeighborRow, chosenFNeighborCol) = neighborsOfFrontierCell[randomIndex] 
+
+            # find chosenFNeighborCell's LOCATION relative to chosenFrontierCell
+            if chosenFNeighborRow == chosenFrontierRow - 1: location = 'north'
+            elif chosenFNeighborCol == chosenFrontierCol + 1: location = 'east'
+            elif chosenFNeighborRow == chosenFrontierRow + 1: location = 'south'
+            elif chosenFNeighborCol == chosenFrontierCol -1: location = 'west'
 
             # carve passage
+            chosenFrontierCell = mode.grid[chosenFrontierRow][chosenFrontierCol]
+            chosenFNeighborCell = mode.grid[chosenFNeighborRow][chosenFNeighborCol]
             if location == 'north':
-                mode.grid[curRow][curCol] = MazeCell(False, True, True, True)
+                chosenFrontierCell.north = False
+                chosenFNeighborCell.south = False
             elif location == 'east':
-                mode.grid[curRow][curCol] = MazeCell(False, True, False, False)
+                chosenFrontierCell.east = False
+                chosenFNeighborCell.west = False
             elif location == 'south':
-                mode.grid[curRow][curCol] = MazeCell(False, False, True, False)
+                chosenFrontierCell.south = False
+                chosenFNeighborCell.north = False
             elif location == 'west':
-                mode.grid[curRow][curCol] = MazeCell(False, False, False, True)
+                chosenFrontierCell.west = False
+                chosenFNeighborCell.east = False
 
             # remove from frontier, add to visited
+            #print('frontier:', mode.frontier)
             mode.frontier.remove((chosenFrontierRow, chosenFrontierCol))
-            mode.visited.append((chosenFrontierRow, chosenFrontierCol))
+            mode.visitedPrim.append((chosenFrontierRow, chosenFrontierCol))
 
             # prepare for new iteration
             (curRow, curCol) = (chosenFrontierRow, chosenFrontierCol)
-            # what should be the new curCell?
 
-
-
-
-                
-
-        
-        
-        
+            counter +=1 
+            
         return mode.grid # modified list
-    def moveIsWithinBounds(mode, row, col, direction):
+    
+    
+    def moveIsWithinBounds(mode, row, col, direction): #done
     # given current position (row,col), is moving in 'direction' within bounds of grid?
         (drow, dcol) = direction
         (newrow, newcol) = (row+drow, col+dcol)
@@ -192,3 +225,103 @@ class HardMode(Mode):
                 if (row, col) == (mode.mazeRows-1, mode.mazeCols-1):
                     canvas.create_line(x0, y1, x1, y1, fill=mode.mint, width=6)
     
+    ####################### user interaction #######################
+    '''
+    def mousePressed(mode, event):        
+        # BUTTON: 'hint'
+        b1cx = (mode.mazeCX - (mode.mazeCols * mode.cellSize) / 2) / 2
+        b1cy = mode.mazeCY
+        if (((b1cx - mode.buttonW/2) <= event.x <= (b1cx + mode.buttonW/2)) and
+            ((b1cy - mode.buttonH/2) <= event.y <= (b1cy + mode.buttonH/2))):
+            mode.showHint = True
+
+        # BUTTON: 'solution'
+        b2cx = mode.width - b1cx
+        b2cy = mode.mazeCY
+        if (((b2cx - mode.buttonW/2) <= event.x <= (b2cx + mode.buttonW/2)) and
+            ((b2cy - mode.buttonH/2) <= event.y <= (b2cy + mode.buttonH/2))):
+            mode.showSolution = not mode.showSolution
+
+        # BUTTON: 'menu'
+        b3cx = mode.width/2
+        b3cy = mode.height - 50 
+        if (((b3cx - mode.buttonW/2) <= event.x <= (b3cx + mode.buttonW/2)) and 
+            ((b3cy - mode.buttonH/2) <= event.y <= (b3cy + mode.buttonH/2))):
+            mode.app.setActiveMode(mode.app.splashScreenMode)
+        '''
+    def keyPressed(mode, event):
+        (row, col) = mode.userPosition
+        if mode.userStartedMaze == False: 
+            mode.userStartedMaze = True
+        if event.key == 'Up' and mode.validMove(row, col, NORTH) == True:
+            mode.doUserMove(row, col, NORTH)
+        elif event.key == 'Right' and mode.validMove(row, col, EAST) == True:
+            mode.doUserMove(row, col, EAST)
+        elif event.key == 'Down' and mode.validMove(row, col, SOUTH) == True:
+            mode.doUserMove(row, col,  SOUTH)
+        elif event.key == 'Left' and mode.validMove(row, col, WEST) == True:
+            mode.doUserMove(row, col, WEST)       
+        #elif event.key == 'BackSpace':
+            #mode.undoUserMove(row, col) --> doesn't exist bc it's a set
+        
+    def validMove(mode, row, col, direction):
+    # given current position (row,col), is moving in 'direction' Valid?
+    # 1. within bounds of grid
+    # 2. there is no wall between currCell and newCell
+        (drow, dcol) = direction
+        (newrow, newcol) = (row+drow, col+dcol)
+        if (not 0 <= newrow < mode.mazeRows) or (not 0 <= newcol < mode.mazeCols):
+            return False
+
+        if direction == NORTH:
+            if mode.grid[row][col].north == False: return True
+        elif direction == EAST:
+            if mode.grid[row][col].east == False: return True
+        elif direction == SOUTH:
+            if mode.grid[row][col].south == False: return True
+        elif direction == WEST:
+            if mode.grid[row][col].west == False: return True
+        return False
+
+    def doUserMove(mode, row, col, direction):
+    # 1. update mode.userPosition
+    # 2. add or subtract new position from the mode.userPath set
+        # (row, col) = mode.userPosition  --> already stated in keyPressed
+        (drow, dcol) = direction
+        (newRow, newCol) = (row + drow, col + dcol)
+        mode.userPosition = (newRow, newCol)
+        if mode.userPosition not in mode.userPath:
+            mode.userPath.add(mode.userPosition)
+        else:
+            mode.userPath.remove((row,col))
+        if mode.userPosition == (0,0): 
+            mode.userSolvedMaze = True
+
+
+    #def undoUserMove(mode, row, col):
+
+    def drawUserPath(mode, canvas):
+        for (row, col) in mode.userPath:
+            (x0, y0, x1, y1) = mode.getCellBounds(row, col)
+            canvas.create_rectangle(x0, y0, x1, y1, fill=mode.mint, width = 0)
+
+    #######################
+    def redrawAll(mode, canvas):
+        #screen background
+        canvas.create_rectangle(0, 0, mode.width, mode.height, fill=mode.mint)
+        mode.drawMaze(canvas)
+        mode.drawUserPath(canvas)
+        '''
+        mode.drawMenuButton(canvas)
+        mode.drawUserPath(canvas)
+        if mode.userStartedMaze == False and mode.showSolution == False:
+            mode.drawMintToGoldInstructions(canvas)
+        if mode.userSolvedMaze == True:
+            mode.drawSolvedText(canvas)
+            mode.drawSolvedRed(canvas)
+        else:
+            mode.drawHintSolutionButtons(canvas)
+        if mode.showSolution == True:
+            mode.drawSolution(canvas)
+        '''
+
