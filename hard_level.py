@@ -40,8 +40,8 @@ class HardMode(Mode):
 
         # general maze 
         mode.cellSize = 25
-        mode.mazeRows = 3
-        mode.mazeCols = 3
+        mode.mazeRows = 20
+        mode.mazeCols = 20
         mode.mazeCX = mode.width/2
         mode.mazeCY = mode.height/2
         mode.mazeTopLeftCornerX = mode.mazeCX - (mode.cellSize * mode.mazeCols / 2)
@@ -57,8 +57,8 @@ class HardMode(Mode):
         mode.mazeGenStartCol = mode.mazeCols - 1 # bottom R corner
         (mode.targetRow, mode.targetCol) = (0, 0) # top L corner
         mode.visitedPrim = []
-        mode.frontier = set()
-        mode.grid = [[MazeCell(True, True, True, True)] * mode.mazeCols for i in range(mode.mazeRows)] #board = 2d list
+        mode.frontier = []
+        mode.grid = [[MazeCell(True, True, True, True) for j in range(mode.mazeCols)] for i in range(mode.mazeRows)] #board = 2d list
         mode.createMaze()
         #print('mode.grid=', mode.grid)
         #print('mode.visitedPrim=', mode.visitedPrim)
@@ -119,19 +119,20 @@ class HardMode(Mode):
             print('iteration', counter)
             #if counter == 4: break
             # add to Frontier list: Unvisited neighbors of curCell 
-            visitedNeighborsOfFrontierCell = set()
+            visitedNeighborsOfFrontierCell = []
 
             for direction in mode.primSearchDirections:
                 if mode.moveIsWithinBounds(curRow, curCol, direction) == True:
                     (drow, dcol) = direction # N, E, S, W 
                     (neighborRow, neighborCol) = (curRow+drow, curCol+dcol) #the neighbor node
-                    if (neighborRow, neighborCol) not in (mode.visitedPrim and mode.frontier):
-                        mode.frontier.add((neighborRow, neighborCol))
-
+                    if (neighborRow, neighborCol) not in (mode.visitedPrim + mode.frontier):
+                        mode.frontier.append((neighborRow, neighborCol))
+                        print('visitedPrim=', mode.visitedPrim)
             # from now on, curCell doesn't matter!!! very cool
 
             # randomly choose 1 frontier cell from list
-            (chosenFrontierRow, chosenFrontierCol) = random.choice(tuple(mode.frontier))
+            randomIndex = random.randint(0, len(mode.frontier) - 1) 
+            (chosenFrontierRow, chosenFrontierCol) = mode.frontier[randomIndex] 
             print('frontier=', mode.frontier)
 
             # create list of fNeighbors of the frontier cells
@@ -140,10 +141,12 @@ class HardMode(Mode):
                     (drow, dcol) = direction # N, E, S, W
                     (fNeighborRow, fNeighborCol) = (chosenFrontierRow+drow, chosenFrontierCol+dcol)
                     if (fNeighborRow, fNeighborCol) in mode.visitedPrim:
-                        visitedNeighborsOfFrontierCell.add((fNeighborRow, fNeighborCol))
+                        visitedNeighborsOfFrontierCell.append((fNeighborRow, fNeighborCol))
             
             # randomly choose 1 fNeighbor cell (in case there are more than 1)
-            (chosenFNeighborRow, chosenFNeighborCol) = random.choice(tuple(visitedNeighborsOfFrontierCell))
+            randomIndex = random.randint(0, len(visitedNeighborsOfFrontierCell) - 1) 
+            (chosenFNeighborRow, chosenFNeighborCol) = visitedNeighborsOfFrontierCell[randomIndex] 
+
             # find chosenFNeighborCell's LOCATION relative to chosenFrontierCell
             if chosenFNeighborRow == chosenFrontierRow - 1: location = 'north'
             elif chosenFNeighborCol == chosenFrontierCol + 1: location = 'east'
@@ -179,16 +182,15 @@ class HardMode(Mode):
             counter +=1 
             
             print('mode.visitedPrim=', mode.visitedPrim)
-            '''
-            print(mode.grid[4][4].west)
-            print(mode.grid[4][4].north)
-            print(mode.grid[4][3].north)
-            print(mode.grid[3][3].south)
-            print(mode.grid[4][2].north)
-            print(mode.grid[3][2].south)
-            print(mode.grid[4][1].north)
-            print(mode.grid[3][1].south)
-            '''
+ 
+          
+            for row in (0, 1,2):
+                for col in (0,1,2):    
+                    print('###############')
+                    print(mode.grid[row][col].north)
+                    print(mode.grid[row][col].east)
+                    print(mode.grid[row][col].south)
+                    print(mode.grid[row][col].west)
             
         return mode.grid # modified list
     
@@ -203,12 +205,14 @@ class HardMode(Mode):
             return True
 
     def drawMaze(mode, canvas):
+        '''
         # thicker border
         halfwidth = mode.mazeCols * mode.cellSize / 2
         halfheight = mode.mazeRows * mode.cellSize / 2
         canvas.create_rectangle(mode.mazeCX-halfwidth, mode.mazeCY-halfheight,
                                 mode.mazeCX+halfwidth, mode.mazeCY+halfheight, 
                                 outline=mode.red, width=6)
+        '''                       
         for row in range(mode.mazeRows):
             for col in range(mode.mazeCols):
                 (x0, y0, x1, y1) = mode.getCellBounds(row, col) 
@@ -216,6 +220,7 @@ class HardMode(Mode):
                 
                 # maze cell color
                 canvas.create_rectangle(x0, y0, x1, y1, fill=mode.mazeCellColor, width=0)
+                '''
                 # gold End square
                 if (row, col) == (0, 0):
                     color = mode.gold
@@ -224,7 +229,7 @@ class HardMode(Mode):
                 # mint Start square
                 if (row, col) == (mode.mazeRows-1, mode.mazeCols-1):
                     canvas.create_rectangle(x0, y0, x1, y1, fill=mode.mint, width=0)
-
+                '''
                 # draw red maze lines
                 if currCell.north == True:
                     canvas.create_line(x0, y0, x1, y0, fill=mode.mazeWallColor, width=1)
@@ -235,11 +240,13 @@ class HardMode(Mode):
                 if currCell.west == True:
                     canvas.create_line(x0, y0, x0, y1, fill=mode.mazeWallColor, width=1)
 
+                '''
                 # mint walls for start & end
                 if (row, col) == (0, 0):
                     canvas.create_line(x0, y0, x1, y0, fill=mode.mint, width=6)
                 if (row, col) == (mode.mazeRows-1, mode.mazeCols-1):
                     canvas.create_line(x0, y1, x1, y1, fill=mode.mint, width=6)
+                '''
     
     ####################### user interaction #######################
     '''
