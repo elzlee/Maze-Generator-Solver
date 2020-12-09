@@ -40,8 +40,8 @@ class HardMode(Mode):
 
         # general maze 
         mode.cellSize = 25
-        mode.mazeRows = 5
-        mode.mazeCols = 5
+        mode.mazeRows = 3
+        mode.mazeCols = 3
         mode.mazeCX = mode.width/2
         mode.mazeCY = mode.height/2
         mode.mazeTopLeftCornerX = mode.mazeCX - (mode.cellSize * mode.mazeCols / 2)
@@ -57,11 +57,11 @@ class HardMode(Mode):
         mode.mazeGenStartCol = mode.mazeCols - 1 # bottom R corner
         (mode.targetRow, mode.targetCol) = (0, 0) # top L corner
         mode.visitedPrim = []
-        mode.frontier = []
+        mode.frontier = set()
         mode.grid = [[MazeCell(True, True, True, True)] * mode.mazeCols for i in range(mode.mazeRows)] #board = 2d list
         mode.createMaze()
-        print('mode.grid=', mode.grid)
-        print('mode.visitedPrim=', mode.visitedPrim)
+        #print('mode.grid=', mode.grid)
+        #print('mode.visitedPrim=', mode.visitedPrim)
 
         # user, path
         mode.userPosition = (mode.mazeRows-1, mode.mazeCols-1) #update with row, drow, etc.
@@ -111,25 +111,28 @@ class HardMode(Mode):
         (curRow, curCol) = (mode.mazeGenStartRow, mode.mazeGenStartCol)
         mode.visitedPrim.append((curRow, curCol))
         location = None
-        neighborsOfFrontierCell = []
+        
         counter = 0
-        while len(mode.visitedPrim) < mode.mazeRows * mode.mazeCols:
+        while len(mode.visitedPrim) <= mode.mazeRows * mode.mazeCols - 1:
         # while there are unvisited cells
-            print('got here')
-            if counter == 1: break
+            print('##########################')
+            print('iteration', counter)
+            #if counter == 4: break
             # add to Frontier list: Unvisited neighbors of curCell 
+            visitedNeighborsOfFrontierCell = set()
+
             for direction in mode.primSearchDirections:
                 if mode.moveIsWithinBounds(curRow, curCol, direction) == True:
                     (drow, dcol) = direction # N, E, S, W 
                     (neighborRow, neighborCol) = (curRow+drow, curCol+dcol) #the neighbor node
-                    if (neighborRow, neighborCol) not in mode.visitedPrim:
-                        mode.frontier.append((neighborRow, neighborCol))
+                    if (neighborRow, neighborCol) not in (mode.visitedPrim and mode.frontier):
+                        mode.frontier.add((neighborRow, neighborCol))
 
             # from now on, curCell doesn't matter!!! very cool
 
             # randomly choose 1 frontier cell from list
-            randomIndex = random.randint(0, len(mode.frontier) - 1) 
-            (chosenFrontierRow, chosenFrontierCol) = mode.frontier[randomIndex] 
+            (chosenFrontierRow, chosenFrontierCol) = random.choice(tuple(mode.frontier))
+            print('frontier=', mode.frontier)
 
             # create list of fNeighbors of the frontier cells
             for direction in mode.primSearchDirections:
@@ -137,12 +140,10 @@ class HardMode(Mode):
                     (drow, dcol) = direction # N, E, S, W
                     (fNeighborRow, fNeighborCol) = (chosenFrontierRow+drow, chosenFrontierCol+dcol)
                     if (fNeighborRow, fNeighborCol) in mode.visitedPrim:
-                        neighborsOfFrontierCell.append((fNeighborRow, fNeighborCol))
+                        visitedNeighborsOfFrontierCell.add((fNeighborRow, fNeighborCol))
             
             # randomly choose 1 fNeighbor cell (in case there are more than 1)
-            randomIndex = random.randint(0, len(neighborsOfFrontierCell) - 1) 
-            (chosenFNeighborRow, chosenFNeighborCol) = neighborsOfFrontierCell[randomIndex] 
-
+            (chosenFNeighborRow, chosenFNeighborCol) = random.choice(tuple(visitedNeighborsOfFrontierCell))
             # find chosenFNeighborCell's LOCATION relative to chosenFrontierCell
             if chosenFNeighborRow == chosenFrontierRow - 1: location = 'north'
             elif chosenFNeighborCol == chosenFrontierCol + 1: location = 'east'
@@ -150,6 +151,8 @@ class HardMode(Mode):
             elif chosenFNeighborCol == chosenFrontierCol -1: location = 'west'
 
             # carve passage
+            print('chosenFrontier visited?=', (chosenFrontierRow, chosenFrontierCol),(chosenFrontierRow, chosenFrontierCol) in mode.visitedPrim)
+            print('chosenFNeighbor visited?=', (chosenFNeighborRow, chosenFNeighborCol), (chosenFNeighborRow, chosenFNeighborCol) in mode.visitedPrim)
             chosenFrontierCell = mode.grid[chosenFrontierRow][chosenFrontierCol]
             chosenFNeighborCell = mode.grid[chosenFNeighborRow][chosenFNeighborCol]
             if location == 'north':
@@ -175,6 +178,18 @@ class HardMode(Mode):
 
             counter +=1 
             
+            print('mode.visitedPrim=', mode.visitedPrim)
+            '''
+            print(mode.grid[4][4].west)
+            print(mode.grid[4][4].north)
+            print(mode.grid[4][3].north)
+            print(mode.grid[3][3].south)
+            print(mode.grid[4][2].north)
+            print(mode.grid[3][2].south)
+            print(mode.grid[4][1].north)
+            print(mode.grid[3][1].south)
+            '''
+            
         return mode.grid # modified list
     
     
@@ -184,7 +199,8 @@ class HardMode(Mode):
         (newrow, newcol) = (row+drow, col+dcol)
         if (not 0 <= newrow < mode.mazeRows) or (not 0 <= newcol < mode.mazeCols):
             return False
-        return True
+        else:
+            return True
 
     def drawMaze(mode, canvas):
         # thicker border
