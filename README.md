@@ -26,5 +26,4 @@ MAZE is a game for solving randomly generated mazes.
 
 
 ## Getting Started
-<br>
 Download all files (including CMU 112 graphics). In the editor, run the __main__.py file. 
