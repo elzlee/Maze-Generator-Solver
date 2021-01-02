@@ -1,28 +1,30 @@
-### 112 Term Project: MAZE
+# 112 Term Project: MAZE
+
+## Overview
 
 MAZE is a game for solving randomly generated mazes. 
 
-<p>Main Menu:</p>
+<p><b>Main Menu:<b></p>
 <img src = "ReadmeImages/mainmenu.png" width = 300>
 
 <br>
 
-<p>Randomly generated maze sample:</p>
+<p><b>Randomly generated maze sample:<b></p>
 <img src = "ReadmeImages/easymazeinprogress.png" width = 300>
 
 <br>
 
-<p>AI Mode:</p>
+<p><b>AI Mode:<b></p>
 <img src = "ReadmeImages/aimode.png" width = 300>
 
 <br>
 
-<p>User-solved maze sample:</p>
+<p><b>User-solved maze sample:<b></p>
 <img src = "ReadmeImages/solvedmaze.png" width = 300>
 
 <br>
 
 
-### Getting Started
+## Getting Started
 
 Download all files (including CMU 112 graphics). In the editor, run the __main__.py file. 
