@@ -1,4 +1,4 @@
-# 112 Term Project: MAZE
+# Random Maze Generator and Solver
 
 ## Overview
 
